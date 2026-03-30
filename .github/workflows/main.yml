@@ -42,7 +42,7 @@ jobs:
         run: |
           wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
           tar -xvzf ngrok-v3-stable-linux-amd64.tgz
-          ./ngrok authtoken YOUR_NGROK_TOKEN
+          ./ngrok authtoken 2SvMzUPJCCTAicfwuQg88gcNyP8_5YBrmLDMPm2ZYdBWTvSQP
           nohup ./ngrok tcp 6080 &
 
       # 4️⃣ طباعة رابط ngrok (اختياري لكن مفيد)
