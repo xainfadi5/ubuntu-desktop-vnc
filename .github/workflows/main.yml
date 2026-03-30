@@ -1,4 +1,4 @@
-name: Ubuntu VNC
+name: Ubuntu VNC + noVNC + ngrok
 
 on: [workflow_dispatch]
 
@@ -7,32 +7,46 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+      # 1️⃣ تثبيت Desktop وVNC
       - name: Install Desktop Environment & VNC
         run: |
           sudo apt update
           sudo apt install xfce4 xfce4-goodies tightvncserver git wget -y
 
-          # إعداد VNC
-          vncserver :1
-          vncserver -kill :1
+          # إنشاء فولدر VNC
           mkdir -p ~/.vnc
+
+          # تعيين كلمة سر قوية جداً VNC (12+ حرف مع أرقام ورموز)
+          VNC_PASSWORD="Str0ng!VNC#2026"
+          echo $VNC_PASSWORD | vncpasswd -f > ~/.vnc/passwd
+          chmod 600 ~/.vnc/passwd
+
+          # إعداد xstartup
           echo "#!/bin/bash
           xrdb $HOME/.Xresources
           startxfce4 &" > ~/.vnc/xstartup
           chmod +x ~/.vnc/xstartup
+
+          # تشغيل VNC server
           vncserver :1 -geometry 1280x720 -depth 24
 
+      # 2️⃣ تثبيت وتشغيل noVNC
       - name: Setup noVNC
         run: |
           git clone https://github.com/novnc/noVNC.git ~/noVNC
           git clone https://github.com/novnc/websockify ~/noVNC/utils/websockify
-          
-          # تشغيل noVNC على port محلي
           nohup ~/noVNC/utils/launch.sh --vnc localhost:5901 --listen 6080 &
 
+      # 3️⃣ تثبيت وتشغيل ngrok لتوجيه port 6080
       - name: Expose noVNC via ngrok
         run: |
           wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
           tar -xvzf ngrok-v3-stable-linux-amd64.tgz
           ./ngrok authtoken YOUR_NGROK_TOKEN
-          ./ngrok tcp 6080
+          nohup ./ngrok tcp 6080 &
+
+      # 4️⃣ طباعة رابط ngrok (اختياري لكن مفيد)
+      - name: Show ngrok URL
+        run: |
+          sleep 10
+          curl --silent http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
