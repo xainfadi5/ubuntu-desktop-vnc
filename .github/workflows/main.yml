@@ -6,10 +6,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+
       - name: Install Desktop Environment & VNC
         run: |
           sudo apt update
-          sudo apt install xfce4 xfce4-goodies tightvncserver git -y
+          sudo apt install xfce4 xfce4-goodies tightvncserver git wget -y
+
+          # إعداد VNC
           vncserver :1
           vncserver -kill :1
           mkdir -p ~/.vnc
@@ -19,10 +22,17 @@ jobs:
           chmod +x ~/.vnc/xstartup
           vncserver :1 -geometry 1280x720 -depth 24
 
-      - name: Setup noVNC Server
+      - name: Setup noVNC
         run: |
           git clone https://github.com/novnc/noVNC.git ~/noVNC
           git clone https://github.com/novnc/websockify ~/noVNC/utils/websockify
+          
+          # تشغيل noVNC على port محلي
           nohup ~/noVNC/utils/launch.sh --vnc localhost:5901 --listen 6080 &
-          sleep 10
-          nohup ssh -o StrictHostKeyChecking=no -R 80:localhost:6080 serveo.net &
+
+      - name: Expose noVNC via ngrok
+        run: |
+          wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
+          tar -xvzf ngrok-v3-stable-linux-amd64.tgz
+          ./ngrok authtoken YOUR_NGROK_TOKEN
+          ./ngrok tcp 6080
